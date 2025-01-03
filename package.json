@@ -17,5 +17,8 @@
     "url": "https://github.com/Badass-Nemesis/mycv-aws-lambda/issues"
   },
   "homepage": "https://github.com/Badass-Nemesis/mycv-aws-lambda#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-ec2": "^3.721.0"
+  }
 }
