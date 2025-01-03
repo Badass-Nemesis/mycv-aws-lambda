@@ -169,10 +169,10 @@ const checkAndDeleteUrlForward = async () => {
         console.log('URL Forwarding Response:', data);
 
         const forwards = data.forwards || [];
-        const forwardExists = forwards.some((forward) => { forward.subdomain === SUBDOMAIN });
+        const forwardExists = forwards.some(forward => forward.subdomain === SUBDOMAIN);
 
         if (forwardExists) {
-            await deleteUrlForward();
+            await deleteUrlForward(forwards[0].id);
             return { statusCode: 200, body: JSON.stringify(`Successfully found the URL forward and deleted it.`) }
         } else {
             return { statusCode: 200, body: JSON.stringify(`No URL forwards were found for subdomain: ${SUBDOMAIN}`) }
@@ -183,9 +183,9 @@ const checkAndDeleteUrlForward = async () => {
     }
 };
 
-const deleteUrlForward = async () => {
+const deleteUrlForward = async (recordId) => {
     try {
-        const response = await fetch(`https://api.porkbun.com/api/json/v3/domain/deleteUrlForward/${DOMAIN}`, {
+        const response = await fetch(`https://api.porkbun.com/api/json/v3/domain/deleteUrlForward/${DOMAIN}/${recordId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
