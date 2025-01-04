@@ -31,7 +31,7 @@ export const handler = async (event) => {
                 await checkAndDeleteUrlForward();
                 await createDNSRecord(ipAddress);
 
-                return { statusCode: 200, body: JSON.stringify(`The instance is running already. And DNS record has been updated from ${currentSiteIpAddress} to ${ipAddress}`) };
+                return { statusCode: 200, body: JSON.stringify(`The instance is initializing now. And DNS record has been updated from ${currentSiteIpAddress} to ${ipAddress}`) };
             }
         } else {
             return { statusCode: 200, body: JSON.stringify(`I don't know what is happening, but here's the isntance status : ${instanceStatus}`) };
@@ -117,7 +117,7 @@ const createDNSRecord = async (ipAddress) => {
                 name: SUBDOMAIN,
                 type: "A",
                 content: ipAddress,
-                ttl: 600, // need to change this TTL to less seconds
+                ttl: 60, // need to change this TTL to less seconds
             })
         });
 
@@ -156,9 +156,7 @@ const checkAndDeleteUrlForward = async () => {
     try {
         const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 apikey: API_KEY,
                 secretapikey: API_SECRET

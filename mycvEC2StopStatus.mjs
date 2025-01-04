@@ -29,7 +29,7 @@ export const handler = async (event) => {
 
             return {
                 statusCode: 200,
-                body: JSON.stringify(`Instance stopped, URL forwarding added, and DNS record deleted.`),
+                body: JSON.stringify(`Instance stopping, URL forwarding added, and DNS record deleted.`),
             };
         }
     } catch (error) {
