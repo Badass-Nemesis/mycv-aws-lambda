@@ -15,6 +15,11 @@ export const handler = async (event) => {
         const instanceStatus = instanceDetails.State.Name;
         console.log(`Instance status is: ${instanceStatus}`); //"pending" || "running" || "shutting-down" || "terminated" || "stopping" || "stopped"
 
+        // had to put this above because I don't want to have any errors in porkbun
+        await checkAndDeleteUrlForward();
+        await deleteDNSRecord();
+        await addUrlForward();
+
         if (instanceStatus === "stopped" || instanceStatus === "stopping") {
             return {
                 statusCode: 200,
@@ -22,9 +27,6 @@ export const handler = async (event) => {
             };
         } else {
             await stopInstance();
-            await checkAndDeleteUrlForward();
-            await deleteDNSRecord();
-            await addUrlForward();
 
             return {
                 statusCode: 200,
