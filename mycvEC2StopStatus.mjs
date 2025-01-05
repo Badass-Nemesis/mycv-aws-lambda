@@ -15,10 +15,17 @@ export const handler = async (event) => {
         const instanceStatus = instanceDetails.State.Name;
         console.log(`Instance status is: ${instanceStatus}`); //"pending" || "running" || "shutting-down" || "terminated" || "stopping" || "stopped"
 
-        // had to put this above because I don't want to have any errors in porkbun
-        await checkAndDeleteUrlForward();
-        await deleteDNSRecord();
-        await addUrlForward();
+        // had to put this here because I don't want to have any errors because of porkbun
+        const urlForward = await checkUrlForward();
+        if (urlForward) {
+            await deleteDNSRecord(); // just in case if there was any error in deleting the dns record previously
+            if (urlForward.location === REDIRECT_URL) {
+                // don't need to do anything
+            } else {
+                await deleteUrlForward();
+                await addUrlForward();
+            }
+        }
 
         if (instanceStatus === "stopped" || instanceStatus === "stopping") {
             return {
@@ -134,7 +141,7 @@ const addUrlForward = async () => {
     }
 };
 
-const checkAndDeleteUrlForward = async () => {
+const checkUrlForward = async () => {
     const url = `https://api.porkbun.com/api/json/v3/domain/getUrlForwarding/${DOMAIN}`;
 
     try {
@@ -154,10 +161,9 @@ const checkAndDeleteUrlForward = async () => {
         const forwardExists = forwards.some(forward => forward.subdomain === SUBDOMAIN);
 
         if (forwardExists) {
-            await deleteUrlForward(forwards[0].id);
-            return { statusCode: 200, body: JSON.stringify(`Successfully found the URL forward and deleted it.`) }
+            return forwards[0];
         } else {
-            return { statusCode: 200, body: JSON.stringify(`No URL forwards were found for subdomain: ${SUBDOMAIN}`) }
+            return null;
         }
     } catch (error) {
         console.error('Error:', error);
