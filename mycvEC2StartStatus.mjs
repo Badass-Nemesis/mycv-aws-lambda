@@ -38,7 +38,7 @@ export const handler = async (event) => {
         }
     } catch (error) {
         console.log(`Error: ${error}`);
-        return { statusCode: 500, body: JSON.stringify(`An error happened. Please check logs.`) };
+        return { statusCode: 500, body: JSON.stringify(`An error happened in handler function. Please check logs.`) };
     }
 }
 
