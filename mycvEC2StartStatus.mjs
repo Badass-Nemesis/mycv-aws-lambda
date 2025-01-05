@@ -7,7 +7,7 @@ const DOMAIN = 'harshitanant.dev';
 const SUBDOMAIN = 'cv'
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
-const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value Xtrue
+const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
 const command = new DescribeInstancesCommand(input);
 
 export const handler = async (event) => {

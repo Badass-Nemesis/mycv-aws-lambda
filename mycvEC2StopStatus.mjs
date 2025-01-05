@@ -7,7 +7,7 @@ const SUBDOMAIN = 'cv'
 const REDIRECT_URL = "mycv-redirect.vercel.app"
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
-const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value Xtrue
+const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
 
 export const handler = async (event) => {
     try {
