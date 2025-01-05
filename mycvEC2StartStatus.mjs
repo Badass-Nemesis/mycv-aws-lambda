@@ -1,10 +1,10 @@
 import { EC2Client, DescribeInstancesCommand, StartInstancesCommand } from "@aws-sdk/client-ec2";
-import dns from 'node:dns';
 
 const API_KEY = 'blah';
 const API_SECRET = 'blah';
 const DOMAIN = 'harshitanant.dev';
-const SUBDOMAIN = 'cv'
+const SUBDOMAIN = 'cv';
+const GET_IPV4_API_URL = "https://api.ipify.org?format=json&hostname=";
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
 const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
@@ -202,15 +202,22 @@ const deleteUrlForward = async (recordId) => {
 };
 
 const getIPv4Address = async () => {
-    return new Promise((resolve, reject) => {
-        dns.lookup(`${SUBDOMAIN}.${DOMAIN}`, (err, address, family) => {
-            if (err) {
-                reject(err);
-            } else if (family === 4) {
-                resolve(address);
-            } else {
-                reject(new Error('Address is not IPv4'));
-            }
-        })
-    })
+    try {
+        const response = await fetch(`${GET_IPV4_API_URL}${SUBDOMAIN}.${DOMAIN}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch the IP address');
+        }
+
+        const data = await response.json();
+        const ipAddress = data.ip;
+
+        if (ipAddress) {
+            return ipAddress;
+        } else {
+            throw new Error('IP address not found');
+        }
+    } catch (error) {
+        console.error('An error happened in fetching IP address : ', error);
+        return { statusCode: 500, body: JSON.stringify(`An error happened in fetching IP address. Please check logs.`) };
+    }
 };

@@ -3,8 +3,8 @@ import { EC2Client, DescribeInstancesCommand, StopInstancesCommand } from "@aws-
 const API_KEY = 'blah';
 const API_SECRET = 'blah';
 const DOMAIN = 'harshitanant.dev';
-const SUBDOMAIN = 'cv'
-const REDIRECT_URL = "https://mycv-redirect.vercel.app"
+const SUBDOMAIN = 'cv';
+const REDIRECT_URL = "https://mycv-redirect.vercel.app";
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
 const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
