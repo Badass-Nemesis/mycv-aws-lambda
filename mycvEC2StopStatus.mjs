@@ -4,7 +4,7 @@ const API_KEY = 'blah';
 const API_SECRET = 'blah';
 const DOMAIN = 'harshitanant.dev';
 const SUBDOMAIN = 'cv'
-const REDIRECT_URL = "mycv-redirect.vercel.app"
+const REDIRECT_URL = "https://mycv-redirect.vercel.app"
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
 const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
@@ -17,14 +17,12 @@ export const handler = async (event) => {
 
         // had to put this here because I don't want to have any errors because of porkbun
         const urlForward = await checkUrlForward();
-        if (urlForward) {
-            await deleteDNSRecord(); // just in case if there was any error in deleting the dns record previously
-            if (urlForward.location === REDIRECT_URL) {
-                // don't need to do anything
-            } else {
-                await deleteUrlForward();
-                await addUrlForward();
-            }
+        await deleteDNSRecord(); // just in case if there was any error in deleting the dns record previously
+        if (urlForward && urlForward.location === REDIRECT_URL) {
+            // do nothing
+        } else {
+            await deleteUrlForward();
+            await addUrlForward();
         }
 
         if (instanceStatus === "stopped" || instanceStatus === "stopping") {
@@ -127,7 +125,7 @@ const addUrlForward = async () => {
                 subdomain: SUBDOMAIN,
                 location: REDIRECT_URL,
                 type: 'temporary',
-                includePath: 'no',
+                includePath: 'yes',
                 wildcard: 'yes'
             })
         });
