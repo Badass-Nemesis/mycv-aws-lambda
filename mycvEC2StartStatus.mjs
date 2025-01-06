@@ -1,10 +1,10 @@
 import { EC2Client, DescribeInstancesCommand, StartInstancesCommand } from "@aws-sdk/client-ec2";
+import dns from 'node:dns';
 
 const API_KEY = 'blah';
 const API_SECRET = 'blah';
 const DOMAIN = 'harshitanant.dev';
 const SUBDOMAIN = 'cv';
-const GET_IPV4_API_URL = `https://dns.google.com/resolve?name=${SUBDOMAIN}.${DOMAIN}&type=A`;
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
 const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
@@ -201,23 +201,16 @@ const deleteUrlForward = async (recordId) => {
     }
 };
 
-const getIPv4Address = async () => {
-    try {
-        const response = await fetch(GET_IPV4_API_URL);
-        if (!response.ok) {
-            throw new Error('Failed to fetch the IP address');
-        }
-
-        const data = await response.json();
-        const ipAddress = data.Answer && data.Answer[0] && data.Answer[0].data; // this is so that it doesn't return object object
-
-        if (ipAddress) {
-            return ipAddress;
-        } else {
-            throw new Error('DNS IP address not found');
-        }
-    } catch (error) {
-        console.error('An error happened in fetching DNS IP address : ', error);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in fetching DNS IP address. Please check logs.`) };
-    }
+const getIPv4Address = () => {
+    return new Promise((resolve, reject) => {
+        const hostname = `${SUBDOMAIN}.${DOMAIN}`;
+        dns.resolve4(hostname, (err, addresses) => {
+            if (err) {
+                console.error('An error occurred while resolving DNS:', err);
+                reject('Failed to fetch the IP address');
+            } else {
+                resolve(addresses[0]);
+            }
+        });
+    });
 };
