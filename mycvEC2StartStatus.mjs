@@ -4,7 +4,7 @@ const API_KEY = 'blah';
 const API_SECRET = 'blah';
 const DOMAIN = 'harshitanant.dev';
 const SUBDOMAIN = 'cv';
-const GET_IPV4_API_URL = "https://api.ipify.org?format=json&hostname=";
+const GET_IPV4_API_URL = `https://dns.google.com/resolve?name=${SUBDOMAIN}.${DOMAIN}&type=A`;
 const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
 const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
@@ -203,21 +203,21 @@ const deleteUrlForward = async (recordId) => {
 
 const getIPv4Address = async () => {
     try {
-        const response = await fetch(`${GET_IPV4_API_URL}${SUBDOMAIN}.${DOMAIN}`);
+        const response = await fetch(GET_IPV4_API_URL);
         if (!response.ok) {
             throw new Error('Failed to fetch the IP address');
         }
 
         const data = await response.json();
-        const ipAddress = data.ip;
+        const ipAddress = data.Answer && data.Answer[0] && data.Answer[0].data; // this is so that it doesn't return object object
 
         if (ipAddress) {
             return ipAddress;
         } else {
-            throw new Error('IP address not found');
+            throw new Error('DNS IP address not found');
         }
     } catch (error) {
-        console.error('An error happened in fetching IP address : ', error);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in fetching IP address. Please check logs.`) };
+        console.error('An error happened in fetching DNS IP address : ', error);
+        return { statusCode: 500, body: JSON.stringify(`An error happened in fetching DNS IP address. Please check logs.`) };
     }
 };

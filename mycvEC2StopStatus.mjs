@@ -125,8 +125,8 @@ const addUrlForward = async () => {
                 subdomain: SUBDOMAIN,
                 location: REDIRECT_URL,
                 type: 'temporary',
-                includePath: 'yes',
-                wildcard: 'yes'
+                includePath: 'no',
+                wildcard: 'no',
             })
         });
 
