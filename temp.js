@@ -10,9 +10,9 @@ const getIPv4Address = async () => {
         }
 
         const data = await response.json();
-        console.log(data); // Log the response to inspect the data structure
+        console.log(data); 
 
-        const ipAddress = data.Answer?.[0]?.data; // Use optional chaining to safely access nested properties
+        const ipAddress = data.Answer?.[0]?.data; 
 
         if (ipAddress) {
             return ipAddress;
