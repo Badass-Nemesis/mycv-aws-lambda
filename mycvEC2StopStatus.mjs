@@ -9,15 +9,28 @@ const config = { region: "ap-south-1" };
 const client = new EC2Client(config);
 const input = { InstanceIds: ["i-blah"], IncludeAllInstances: true }; // important to have this boolean value true
 
+// just a helper function for Porkbun API calls
+const fetchPorkbun = async (url, body) => {
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            apikey: API_KEY,
+            secretapikey: API_SECRET,
+            ...body,
+        }),
+    });
+};
+
 export const handler = async (event) => {
     try {
         const instanceDetails = await getInstance();
         const instanceStatus = instanceDetails.State.Name;
-        console.log(`Instance status is: ${instanceStatus}`); //"pending" || "running" || "shutting-down" || "terminated" || "stopping" || "stopped"
+        console.log(`Instance status is: ${instanceStatus}`); // "pending" || "running" || "shutting-down" || "terminated" || "stopping" || "stopped"
 
         // had to put this here because I don't want to have any errors because of porkbun
         const urlForward = await checkUrlForward();
-        await deleteDNSRecord(); // just in case if there was any error in deleting the dns record previously
+        await deleteDNSRecord(); // just in case if there was any error in deleting the DNS record previously
         if (urlForward && urlForward.location === REDIRECT_URL) {
             // do nothing
         } else {
@@ -32,7 +45,6 @@ export const handler = async (event) => {
             };
         } else {
             await stopInstance();
-
             return {
                 statusCode: 200,
                 body: JSON.stringify(`Instance stopping, URL forwarding added, and DNS record deleted.`),
@@ -55,7 +67,7 @@ const getInstance = async () => {
         return instanceDetails;
     } catch (error) {
         console.error('Error in getting instance:', error);
-        return null;
+        throw error;
     }
 };
 
@@ -70,64 +82,30 @@ const stopInstance = async () => {
         return { statusCode: 200, body: JSON.stringify(`Instance is stopping now.`) };
     } catch (error) {
         console.error('Error in stopping instance:', error);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in stopping the instance. Please check logs.`) };
+        throw error;
     }
 };
 
-// const ping = async () => {
-//     try {
-//         const response = await fetch('https://api.porkbun.com/api/json/v3/ping', {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify({
-//                 apikey: API_KEY,
-//                 secretapikey: API_SECRET
-//             })
-//         });
-
-//         const data = await response.json();
-//         console.log('Ping response: ', data);
-//         return data;
-//     } catch (error) {
-//         console.log(`An error happened. Here are the details: ${error}`);
-//         return { statusCode: 500, body: JSON.stringify(`An error happened in getting ping. Please check logs.`) };
-//     }
-// }
-
 const deleteDNSRecord = async () => {
     try {
-        const response = await fetch(`https://api.porkbun.com/api/json/v3/dns/deleteByNameType/${DOMAIN}/A/${SUBDOMAIN}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                apikey: API_KEY,
-                secretapikey: API_SECRET,
-            })
-        });
-
+        const response = await fetchPorkbun(`https://api.porkbun.com/api/json/v3/dns/deleteByNameType/${DOMAIN}/A/${SUBDOMAIN}`);
         const data = await response.json();
         console.log('DNS Delete Response:', data);
         return data;
     } catch (error) {
         console.error('Error in deleting DNS record:', error);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in deleting the DNS record. Please check logs.`) };
+        throw error;
     }
 };
 
 const addUrlForward = async () => {
     try {
-        const response = await fetch(`https://api.porkbun.com/api/json/v3/domain/addUrlForward/${DOMAIN}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                apikey: API_KEY,
-                secretapikey: API_SECRET,
-                subdomain: SUBDOMAIN,
-                location: REDIRECT_URL,
-                type: 'temporary',
-                includePath: 'no',
-                wildcard: 'no',
-            })
+        const response = await fetchPorkbun(`https://api.porkbun.com/api/json/v3/domain/addUrlForward/${DOMAIN}`, {
+            subdomain: SUBDOMAIN,
+            location: REDIRECT_URL,
+            type: 'temporary',
+            includePath: 'no',
+            wildcard: 'no',
         });
 
         const data = await response.json();
@@ -135,23 +113,13 @@ const addUrlForward = async () => {
         return data;
     } catch (error) {
         console.error('Error in adding URL forward:', error);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in adding the URL forward. Please check logs.`) };
+        throw error;
     }
 };
 
 const checkUrlForward = async () => {
-    const url = `https://api.porkbun.com/api/json/v3/domain/getUrlForwarding/${DOMAIN}`;
-
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                apikey: API_KEY,
-                secretapikey: API_SECRET
-            })
-        });
-
+        const response = await fetchPorkbun(`https://api.porkbun.com/api/json/v3/domain/getUrlForwarding/${DOMAIN}`);
         const data = await response.json();
         console.log('URL Forwarding Response:', data);
 
@@ -164,27 +132,22 @@ const checkUrlForward = async () => {
             return null;
         }
     } catch (error) {
-        console.error('Error:', error);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in getting and deleting the URL forwarding. Please check logs.`) };
+        console.error('Error in checking URL forward:', error);
+        return null;
     }
 };
 
-const deleteUrlForward = async (recordId) => {
+const deleteUrlForward = async () => {
     try {
-        const response = await fetch(`https://api.porkbun.com/api/json/v3/domain/deleteUrlForward/${DOMAIN}/${recordId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                apikey: API_KEY,
-                secretapikey: API_SECRET,
-            })
-        });
-
-        const deleteData = await response.json();
-        console.log('URL Forward Delete Response:', deleteData);
-        return deleteData;
+        const urlForward = await checkUrlForward();
+        if (urlForward) {
+            const response = await fetchPorkbun(`https://api.porkbun.com/api/json/v3/domain/deleteUrlForward/${DOMAIN}/${urlForward.id}`);
+            const deleteData = await response.json();
+            console.log('URL Forward Delete Response:', deleteData);
+            return deleteData;
+        }
     } catch (error) {
-        console.log(`An error happened. Here are the details: ${error}`);
-        return { statusCode: 500, body: JSON.stringify(`An error happened in deleting the URL forward. Please check logs.`) };
+        console.error('Error in deleting URL forward:', error);
+        throw error;
     }
 };
