@@ -34,7 +34,7 @@ export const handler = async (event) => {
                 return { statusCode: 200, body: JSON.stringify(`The instance is initializing now. And DNS record has been updated from ${currentSiteIpAddress} to ${ipAddress}`) };
             }
         } else {
-            return { statusCode: 200, body: JSON.stringify(`I don't know what is happening, but here's the isntance status : ${instanceStatus}`) };
+            return { statusCode: 200, body: JSON.stringify(`I don't know what is happening, but here's the instance status : ${instanceStatus}`) };
         }
     } catch (error) {
         console.log(`Error in handler function: ${error}`);
