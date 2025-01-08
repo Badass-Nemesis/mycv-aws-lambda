@@ -44,10 +44,13 @@ export const handler = async (event) => {
             if (ipAddress && currentSiteIpAddress && (ipAddress === currentSiteIpAddress)) {
                 return { statusCode: 200, body: JSON.stringify(`The instance is running already.`) };
             } else {
-                await Promise.all([
+                // this will work fine
+                const [urlForwardResult, dnsRecordResult] = await Promise.allSettled([
                     checkAndDeleteUrlForward(),
                     createDNSRecord(ipAddress),
                 ]);
+                if (urlForwardResult.status === 'rejected') { console.error('checkAndDeleteUrlForward failed:', urlForwardResult.reason); }
+                if (dnsRecordResult.status === 'rejected') { console.error('createDNSRecord failed:', dnsRecordResult.reason); }
 
                 return {
                     statusCode: 200,
